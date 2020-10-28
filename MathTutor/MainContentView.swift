@@ -10,9 +10,11 @@ import SwiftUI
 struct GameView: View {
     
     var option: GameOption
+    var difficulty: GameLevel
     
     var body: some View {
         Text(option.type.title())
+        Text(difficulty.title())
     }
 }
 
@@ -32,7 +34,23 @@ struct MainButton: View {
     }
 }
 
-enum OptionType {
+struct AlertButton: View {
+    
+    let title: String
+    
+    var body: some View {
+        Text(title)
+            .font(.system(size: 14, weight: .light, design: .serif))
+            .foregroundColor(.white)
+            .frame(width: 80, height: 30)
+            .overlay(Capsule().stroke(Color.black, lineWidth: 1))
+            .shadow(color: Color.black, radius: 2)
+            .background(Color.blue)
+            .clipShape(Capsule())
+    }
+}
+
+enum OptionType: Equatable {
     case add
     case subtract
     case multiply
@@ -76,6 +94,30 @@ struct GameOption: Hashable {
 
 struct MainContentView: View {
     
+    @State private var showAdd = false
+    @State private var showSubtract = false
+    @State private var showDivide = false
+    @State private var showMultiply = false
+    
+    @State private var promptForDifficulty = false
+    @State private var modeSelection: OptionType?
+    
+    @State private var difficultySelection: GameLevel? {
+        didSet {
+            guard let modeSelection = modeSelection else { return }
+            switch modeSelection {
+            case .add:
+                showAdd.toggle()
+            case .subtract:
+                showSubtract.toggle()
+            case .multiply:
+                showMultiply.toggle()
+            case .divide:
+                showDivide.toggle()
+            }
+        }
+    }
+    
     private let options = [
         GameOption(type: .add),
         GameOption(type: .subtract),
@@ -92,12 +134,73 @@ struct MainContentView: View {
                     .edgesIgnoringSafeArea(.all)
                     .opacity(0.5)
                 VStack {
-                    ForEach(options, id: \.self) { option in
-                        NavigationLink(destination: GameView(option: option)) {
-                            MainButton(title: option.type.title())
-                        }
-                        .padding(6)
+                    NavigationLink(destination: GameView(option: options[0], difficulty: difficultySelection ?? .easy), isActive: $showAdd) {}
+                    Button(action: {
+                        modeSelection = .add
+                        promptForDifficulty.toggle()
+                    }) {
+                        MainButton(title: options[0].type.title())
                     }
+                    .padding(6)
+                    NavigationLink(destination: GameView(option: options[1], difficulty: difficultySelection ?? .easy), isActive: $showSubtract) {}
+                    Button(action: {
+                        modeSelection = .subtract
+                        promptForDifficulty.toggle()
+                    }) {
+                        MainButton(title: options[1].type.title())
+                    }
+                    .padding(6)
+                    NavigationLink(destination: GameView(option: options[2], difficulty: difficultySelection ?? .easy), isActive: $showMultiply) {}
+                    Button(action: {
+                        modeSelection = .multiply
+                        promptForDifficulty.toggle()
+                    }) {
+                        MainButton(title: options[2].type.title())
+                    }
+                    .padding(6)
+                    NavigationLink(destination: GameView(option: options[3], difficulty: difficultySelection ?? .easy), isActive: $showDivide) {}
+                    Button(action: {
+                        modeSelection = .divide
+                        promptForDifficulty.toggle()
+                    }) {
+                        MainButton(title: options[3].type.title())
+                    }
+                    .padding(6)
+                }
+                
+                if promptForDifficulty {
+                    ZStack {
+                        Color.blue
+                            .overlay(Rectangle().stroke(Color.black, lineWidth: 1))
+                            .shadow(color: Color.black, radius: 2)
+                            .clipShape(Rectangle())
+                        VStack {
+                            Text("Choose Difficulty")
+                                .foregroundColor(.white)
+                                .padding(10)
+                            HStack {
+                                Button(action: {
+                                    difficultySelection = .easy
+                                    promptForDifficulty = false
+                                }) {
+                                    AlertButton(title: "Easy")
+                                }
+                                Button(action: {
+                                    difficultySelection = .normal
+                                    promptForDifficulty = false
+                                }) {
+                                    AlertButton(title: "Normal")
+                                }
+                                Button(action: {
+                                    difficultySelection = .hard
+                                    promptForDifficulty = false
+                                }) {
+                                    AlertButton(title: "Hard")
+                                }
+                            }
+                        }
+                    }
+                    .frame(width: 300, height: 100)
                 }
             }
         }
